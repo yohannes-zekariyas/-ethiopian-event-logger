@@ -1,18 +1,24 @@
-Ethiopian Calendar Event Logger 📅
+Ethiopian Calendar Event Logger 📅 
+
 This is a simple C++ console program that lets users add, view, search, save, and load events using the Ethiopian calendar.
 I built this project to practice basic C++ programming concepts such as dynamic memory, file handling, structures, and input validation. 
 
 ✨ Features 
 
-1. Add events with:
+1. Add events with: 
+
 Event title
 Event description
 Ethiopian date (day, month, year)
  
-2.View all saved events
-3.Search events by:
-Day
-Month
+2.View all saved events 
+
+3.Search events by: 
+
+Day 
+
+Month 
+
 Year
 Save events to a file called events.txt
 -Load saved events automatically when the program starts
