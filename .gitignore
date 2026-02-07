@@ -1,41 +1,285 @@
-# Prerequisites
-*.d
+// Ethiopian Calendar Event Logger
+#include <iostream>
+#include <fstream>
+#include <string>
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+using namespace std;
 
-# Precompiled Headers
-*.gch
-*.pch
+// Structure for an event
+struct event {
+    string title;
+    string description;
+    int day, month, year;
+};
 
-# Linker files
-*.ilk
+// Global dynamic array and counter
+event* e = nullptr;
+int eventCount = 0; // to count event start from zero
+int now;//now is the variable that hold how many event from file not from ram
+// Add new event
+void add() {
+    // Increase dynamic array
+    event* temp = new event[eventCount + 1];
+    for (int i = 0; i < eventCount; i++) {
+        temp[i] = e[i];
+    }
+    //delete[] e; //to protect from slow speed
+    e = temp;
 
-# Debugger Files
-*.pdb
+    cin.ignore(1000, '\n'); // remove leftover input before getline
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
+    // Input title
+    cout << "\nEnter Event Title: ";
+    getline(cin, e[eventCount].title);
 
-# Fortran module files
-*.mod
-*.smod
+    // Input description
+    cout << "Enter Description of Event: ";
+    getline(cin, e[eventCount].description);
 
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
+    // Input and validate Ethiopian date
+    while (true) {
+        cout << "\nEnter Event date (day month year):\n";
+        cin >> e[eventCount].day >> e[eventCount].month >> e[eventCount].year;
 
-# Executables
-*.exe
-*.out
-*.app
+        if (cin.fail()) {             // wrong type
+            cin.clear();               // clear fail flag or to reset stream
+            cin.ignore(1000, '\n');    // remove bad input
+            cout << "Invalid input! Enter numbers only.\n";
+            continue;
+        }
 
-# debug information files
-*.dwo
+        // Month check
+        if (e[eventCount].month < 1 || e[eventCount].month > 13) {
+            cout << "Invalid month! Ethiopian months are 1-13.\n";
+            continue;
+        }
+
+        // Pagume check (month 13)
+        if (e[eventCount].month == 13) {
+            if (e[eventCount].year % 4 == 0) { // leap year
+                if (e[eventCount].day < 1 || e[eventCount].day > 6) {
+                    cout << "Invalid Pagume day! Leap-year Pagume has 1-6 days.\n";
+                    continue;
+                }
+            } else {                   // normal year
+                if (e[eventCount].day < 1 || e[eventCount].day > 5) {
+                    cout << "Invalid Pagume day! Normal-year Pagume has 1-5 days.\n";
+                    continue;
+                }
+            }
+        }
+        // Months 1-12
+        else if (e[eventCount].day < 1 || e[eventCount].day > 30) {
+            cout << "Invalid day! Ethiopian months 1-12 have 1-30 days.\n";
+            continue;
+        }
+cout<<"\nEvent added successfully.";
+        break; // date is valid
+    }
+
+    eventCount++; // increase counter after adding event
+}
+
+// View all events
+void view() {
+    if (eventCount == 0) {
+        cout << "\nNo events available.\n";
+        return;
+    }
+
+    cout << "\n=============== EVENTS ===============\n";
+    for (int i = 0; i < eventCount; i++) {
+        cout << "Date: " << e[i].day << "/" << e[i].month << "/" << e[i].year << "\n";
+        cout << "Title: " << e[i].title << "\n";
+        cout << "Description: " << e[i].description << "\n";
+        cout << "-------------------------------------\n";
+    }
+}
+
+// Save events to file
+void save() {
+    if (now == eventCount) {
+        cout << "No events to save.\n";
+        return;
+    }
+
+    ofstream file("events.txt"); // overwrite file to avoid duplicates
+
+    if (!file) {
+        cout << "File opening failed.\n";
+        return;
+    }
+
+    for (int i = 0; i < eventCount; i++) {
+        file << e[i].day << " "
+             << e[i].month << " "
+             << e[i].year << "\n";
+        file << e[i].title << "\n";
+        file << e[i].description << "\n";
+        file << "-----\n";
+    }
+
+    file.close();
+    cout << "Events saved successfully.\n";
+}
+
+// Load events from file
+void load() {
+    ifstream file("events.txt");
+    if (!file) {
+        cout << "No saved file found.\n";
+        return;
+    }
+
+    delete[] e;
+    e = nullptr;
+    eventCount = 0;
+
+    while (true) {
+        event temp;
+        if (!(file >> temp.day >> temp.month >> temp.year))
+            break;
+
+        file.ignore(1000, '\n');
+        getline(file, temp.title);
+        getline(file, temp.description);
+        string separator;
+        getline(file, separator); // safe separator read
+
+        // increase memory
+        event* newArr = new event[eventCount + 1];
+        for (int i = 0; i < eventCount; i++) newArr[i] = e[i];
+        newArr[eventCount] = temp;
+
+        delete[] e;
+        e = newArr;
+        eventCount++;
+    }
+now=eventCount;
+    file.close();
+    cout << "Events Pploaded successfully.\n";
+}
+
+// Search by day, month, or year
+void searchEvent() {
+    int choice;
+    while(true){
+        cout << "\nSearch by date:\n1. Day\n2. Month\n3. Year\nEnter choice: ";
+        cin >> choice;
+        if(cin.fail()){
+            cin.clear();
+            cin.ignore(1000, '\n');
+            cout << "Invalid input, please enter valid input (1-3): ";
+        } else if(choice >= 1 && choice <= 3) break;
+        else cout << "Invalid Choice, please enter 1-3: ";
+    }
+
+    bool found = false;
+
+    if (choice == 1) {
+        int d;
+        cout << "Enter day: ";
+        while(true){
+            cin >> d ;
+            if(cin.fail()){
+                cin.clear();
+                cin.ignore(1000, '\n');
+                cout << "Invalid input, enter number only: ";
+            }
+            else if(d>0 && d<31) break;
+            else cout << "Enter correct day (1-30): ";
+        }
+
+        for (int i = 0; i < eventCount; i++) {
+            if (e[i].day == d) {
+                cout << "\nDate: " << e[i].day << "/" << e[i].month << "/" << e[i].year;
+                cout << "\nTitle: " << e[i].title;
+                cout << "\nDescription: " << e[i].description << "\n";
+                found = true;
+            }
+        }
+
+        if (!found) cout << "\nNo event found on this day.\n";
+    }
+    else if (choice == 2) {
+        int m;
+        cout << "Enter month: ";
+        while(true){
+            cin >> m;
+            if(cin.fail()){
+                cin.clear();
+                cin.ignore(1000, '\n');
+                cout << "Invalid input, enter number only: ";
+            }
+            else if(m>0 && m<14) break;
+            else cout << "Enter correct month (1-13): ";
+        }
+
+        for (int i = 0; i < eventCount; i++) {
+            if (e[i].month == m) {
+                cout << "\nDate: " << e[i].day << "/" << e[i].month << "/" << e[i].year;
+                cout << "\nTitle: " << e[i].title;
+                cout << "\nDescription: " << e[i].description << "\n";
+                found = true;
+            }
+        }
+
+        if (!found) cout << "\nNo event found with this month.\n";
+    }
+    else if (choice == 3) {
+        int y;
+        cout << "Enter year: ";
+        while(true){
+            cin >> y;
+            if(cin.fail()){
+                cin.clear();
+                cin.ignore(1000, '\n');
+                cout << "Invalid input, enter number only: ";
+            }
+            else if(y>0 && y<8000) break;
+            else cout << "Enter correct year (1-7999): ";
+        }
+
+        for (int i = 0; i < eventCount; i++) {
+            if (e[i].year == y) {
+                cout << "\nDate: " << e[i].day << "/" << e[i].month << "/" << e[i].year;
+                cout << "\nTitle: " << e[i].title;
+                cout << "\nDescription: " << e[i].description << "\n";
+                found = true;
+            }
+        }
+
+        if (!found) cout << "\nNo event found in this year.\n";
+    }
+}
+
+int main() {
+    int ch;
+
+    load(); // load events at start
+
+    while (true) {
+        cout << "\n======== Calendar Event Logger ========\n";
+        cout << "1. Add event\n2. View events\n3. Save events\n4. Search by date\n0. Exit\nEnter choice: ";
+        while(true){
+            cin >> ch;
+            if (cin.fail()) {
+                cin.clear();
+                cin.ignore(1000, '\n');
+                cout << "Invalid input, enter correct choice 0-4:";
+            }
+            else if(ch>=0 && ch<=4) break;
+            else cout << "Enter correct choice (0-4): ";
+        }
+
+        if (ch == 1) add();
+        else if (ch == 2) view();
+        else if (ch == 3) save();
+        else if (ch == 4) searchEvent();
+        else if (ch == 0) break;
+    }
+
+    delete[] e; // free memory before exit
+    return 0;
+}
+
